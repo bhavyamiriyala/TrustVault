@@ -1,3 +1,4 @@
+
 import os
 import re
 import secrets
@@ -15,6 +16,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.conf import settings
 
 from .models import Document, DocumentPermission, AuditLog
+
 
 def register(request):
     if request.method == 'POST':
@@ -110,35 +112,58 @@ def verify_otp(request):
     if request.method == 'POST':
         entered_otp = request.POST.get('otp', '').strip()
 
+        # Check OTP expiry
         if time.time() > pending['expires_at']:
             request.session.pop('pending_registration', None)
             messages.error(request, 'OTP expired. Please register again.')
             return redirect('register')
 
+        # Check maximum incorrect attempts
         if pending['attempts'] >= 5:
             request.session.pop('pending_registration', None)
-            messages.error(request, 'Too many incorrect attempts. Please register again.')
+            messages.error(
+                request,
+                'Too many incorrect attempts. Please register again.'
+            )
             return redirect('register')
 
+        # Verify entered OTP
         if not check_password(entered_otp, pending['otp_hash']):
             pending['attempts'] += 1
+
+            # Clear registration immediately after the fifth wrong attempt
+            if pending['attempts'] >= 5:
+                request.session.pop('pending_registration', None)
+                messages.error(
+                    request,
+                    'Too many incorrect attempts. Please register again.'
+                )
+                return redirect('register')
+
             request.session['pending_registration'] = pending
             messages.error(request, 'Incorrect OTP. Please try again.')
             return redirect('verify_otp')
 
-        # Check again to prevent duplicate registration
+        # Check for duplicate username
         if User.objects.filter(
             username__iexact=pending['username']
         ).exists():
             request.session.pop('pending_registration', None)
-            messages.error(request, 'Username already exists. Please register again.')
+            messages.error(
+                request,
+                'Username already exists. Please register again.'
+            )
             return redirect('register')
 
+        # Check for duplicate email
         if User.objects.filter(
             email__iexact=pending['email']
         ).exists():
             request.session.pop('pending_registration', None)
-            messages.error(request, 'Email already registered. Please login.')
+            messages.error(
+                request,
+                'Email already registered. Please login.'
+            )
             return redirect('login')
 
         # Create account only after successful OTP verification
@@ -158,7 +183,6 @@ def verify_otp(request):
         return redirect('login')
 
     return render(request, 'accounts/verify_otp.html')
-
 
 
 def user_login(request):
@@ -197,7 +221,10 @@ def upload_document(request):
         uploaded_file = request.FILES.get('file')
 
         if not title or not uploaded_file:
-            messages.error(request, 'Please provide a title and select a file!')
+            messages.error(
+                request,
+                'Please provide a title and select a file!'
+            )
             return redirect('upload')
 
         allowed_extensions = ['.pdf', '.doc', '.docx', '.txt']
@@ -206,7 +233,10 @@ def upload_document(request):
         extension = os.path.splitext(uploaded_file.name)[1].lower()
 
         if extension not in allowed_extensions:
-            messages.error(request, 'Only PDF, DOC, DOCX and TXT files are allowed!')
+            messages.error(
+                request,
+                'Only PDF, DOC, DOCX and TXT files are allowed!'
+            )
             return redirect('upload')
 
         if uploaded_file.size > max_size:
@@ -243,8 +273,12 @@ def document_list(request):
     )
 
     if search_query:
-        my_documents = my_documents.filter(title__icontains=search_query)
-        shared_documents = shared_documents.filter(title__icontains=search_query)
+        my_documents = my_documents.filter(
+            title__icontains=search_query
+        )
+        shared_documents = shared_documents.filter(
+            title__icontains=search_query
+        )
 
     my_documents = my_documents.order_by('-uploaded_at')
     shared_documents = shared_documents.distinct().order_by('-uploaded_at')
@@ -279,7 +313,10 @@ def share_document(request, document_id):
             return redirect('share_document', document_id=document.id)
 
         if shared_user == request.user:
-            messages.error(request, 'You cannot share a document with yourself!')
+            messages.error(
+                request,
+                'You cannot share a document with yourself!'
+            )
             return redirect('share_document', document_id=document.id)
 
         DocumentPermission.objects.update_or_create(
@@ -306,21 +343,24 @@ def share_document(request, document_id):
     })
 
 
-
 @login_required
 def access_document(request, document_id):
     document = get_object_or_404(Document, id=document_id)
 
+    # Check whether the logged-in user owns the document
     is_owner = document.owner == request.user
 
-    has_permission = DocumentPermission.objects.filter(
+    # Check whether the document is shared with this user
+    permission = DocumentPermission.objects.filter(
         document=document,
         shared_with=request.user
-    ).exists()
+    ).first()
 
-    if not is_owner and not has_permission:
+    # Deny access if the user is neither the owner nor an authorized user
+    if not is_owner and permission is None:
         raise Http404
 
+    # Check whether the document has a file
     if not document.file:
         raise Http404("Document file not found.")
 
@@ -329,6 +369,7 @@ def access_document(request, document_id):
     except (FileNotFoundError, OSError, ValueError):
         raise Http404("Document file not found.")
 
+    # Record the document access
     AuditLog.objects.create(
         document=document,
         actor=request.user,
@@ -336,6 +377,7 @@ def access_document(request, document_id):
         details='Document downloaded'
     )
 
+    # Use a safe filename
     filename = os.path.basename(document.file.name)
 
     return FileResponse(
@@ -343,6 +385,7 @@ def access_document(request, document_id):
         as_attachment=True,
         filename=filename
     )
+
 
 @login_required
 @require_POST
@@ -409,7 +452,10 @@ def edit_document(request, document_id):
 
         if not title:
             messages.error(request, 'Document title cannot be empty!')
-            return redirect('edit_document', document_id=document.id)
+            return redirect(
+                'edit_document',
+                document_id=document.id
+            )
 
         if uploaded_file:
             allowed_extensions = ['.pdf', '.doc', '.docx', '.txt']
@@ -422,11 +468,20 @@ def edit_document(request, document_id):
                     request,
                     'Only PDF, DOC, DOCX and TXT files are allowed!'
                 )
-                return redirect('edit_document', document_id=document.id)
+                return redirect(
+                    'edit_document',
+                    document_id=document.id
+                )
 
             if uploaded_file.size > max_size:
-                messages.error(request, 'File size must not exceed 5 MB!')
-                return redirect('edit_document', document_id=document.id)
+                messages.error(
+                    request,
+                    'File size must not exceed 5 MB!'
+                )
+                return redirect(
+                    'edit_document',
+                    document_id=document.id
+                )
 
             document.file = uploaded_file
 

@@ -1,12 +1,14 @@
 
 import re
 import tempfile
+import time
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.contrib.auth.hashers import make_password
 
 from .models import Document, DocumentPermission, AuditLog
 
@@ -84,6 +86,66 @@ class TrustVaultTests(TestCase):
             User.objects.filter(username='newuser').exists()
         )
 
+    def test_registration_rejects_incorrect_otp(self):
+        session = self.client.session
+
+        session['pending_registration'] = {
+            'username': 'wrongotpuser',
+            'email': 'wrongotp@example.com',
+            'password_hash': make_password('StrongPass@123'),
+            'otp_hash': make_password('123456'),
+            'expires_at': time.time() + 300,
+            'attempts': 0,
+        }
+
+        session.save()
+
+        response = self.client.post(
+            reverse('verify_otp'),
+            {'otp': '654321'}
+        )
+
+        self.assertRedirects(response, reverse('verify_otp'))
+
+        self.assertFalse(
+            User.objects.filter(username='wrongotpuser').exists()
+        )
+
+        self.assertEqual(
+            self.client.session['pending_registration']['attempts'],
+            1
+        )
+
+    def test_registration_rejects_expired_otp(self):
+        session = self.client.session
+
+        session['pending_registration'] = {
+            'username': 'expiredotpuser',
+            'email': 'expiredotp@example.com',
+            'password_hash': make_password('StrongPass@123'),
+            'otp_hash': make_password('123456'),
+            'expires_at': time.time() - 10,
+            'attempts': 0,
+        }
+
+        session.save()
+
+        response = self.client.post(
+            reverse('verify_otp'),
+            {'otp': '123456'}
+        )
+
+        self.assertRedirects(response, reverse('register'))
+
+        self.assertNotIn(
+            'pending_registration',
+            self.client.session
+        )
+
+        self.assertFalse(
+            User.objects.filter(username='expiredotpuser').exists()
+        )
+
     def test_user_can_login(self):
         response = self.client.post(
             reverse('login'),
@@ -94,6 +156,22 @@ class TrustVaultTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('dashboard'))
+
+    def test_user_cannot_login_with_incorrect_password(self):
+        self.client.post(
+            reverse('login'),
+            {
+                'username': 'owner',
+                'password': 'WrongPassword@123',
+            }
+        )
+
+        response = self.client.get(reverse('dashboard'))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={reverse('dashboard')}"
+        )
 
     def test_dashboard_requires_login(self):
         response = self.client.get(reverse('dashboard'))
@@ -151,6 +229,7 @@ class TrustVaultTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('document_list'))
+
         self.assertTrue(
             Document.objects.filter(
                 owner=self.owner,
@@ -162,6 +241,31 @@ class TrustVaultTests(TestCase):
             AuditLog.objects.filter(
                 action='upload',
                 actor=self.owner
+            ).exists()
+        )
+
+    def test_upload_rejects_oversized_file(self):
+        self.login_as(self.owner)
+
+        large_file = SimpleUploadedFile(
+            'large.txt',
+            b'A' * (5 * 1024 * 1024 + 1),
+            content_type='text/plain'
+        )
+
+        response = self.client.post(
+            reverse('upload'),
+            {
+                'title': 'Large Document',
+                'file': large_file,
+            }
+        )
+
+        self.assertRedirects(response, reverse('upload'))
+
+        self.assertFalse(
+            Document.objects.filter(
+                title='Large Document'
             ).exists()
         )
 
@@ -183,6 +287,7 @@ class TrustVaultTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('upload'))
+
         self.assertFalse(
             Document.objects.filter(
                 title='Invalid Document'
@@ -231,7 +336,9 @@ class TrustVaultTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response['Content-Disposition'].startswith('attachment'))
+        self.assertTrue(
+            response['Content-Disposition'].startswith('attachment')
+        )
         response.close()
 
     def test_unshared_user_cannot_access_document(self):
@@ -347,3 +454,18 @@ class TrustVaultTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Test upload')
+
+    def test_other_user_cannot_view_owner_audit_logs(self):
+        AuditLog.objects.create(
+            document=self.document,
+            actor=self.owner,
+            action='upload',
+            details='Private owner activity'
+        )
+
+        self.login_as(self.reader)
+
+        response = self.client.get(reverse('audit_trail'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Private owner activity')
