@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth.hashers import make_password
-
+from django.test import Client
 from .models import Document, DocumentPermission, AuditLog
 
 
@@ -469,3 +469,17 @@ class TrustVaultTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Private owner activity')
+
+   
+    def test_revoke_access_rejects_post_without_csrf_token(self):
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.force_login(self.owner)
+
+        response = csrf_client.post(
+            reverse(
+                'revoke_access',
+                args=[self.document.id, self.reader.id]
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
