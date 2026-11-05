@@ -1,0 +1,650 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TrustVault | My Documents</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'DM Sans', Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f8f8;
+            color: #203638;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            padding: 20px 7%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5eeee;
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: 800;
+            color: #173f40;
+        }
+
+        .logo span {
+            color: #0d9488;
+        }
+
+        .nav-link {
+            color: #0d9488;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: 45px auto;
+            padding: 0 20px;
+        }
+
+        .heading {
+            margin-bottom: 28px;
+        }
+
+        .heading h1 {
+            color: #173f40;
+            font-size: 29px;
+            margin-bottom: 9px;
+        }
+
+        .heading p {
+            color: #829394;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            background: #e5f7f1;
+            color: #087f65;
+            border: 1px solid #c5eadf;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .search-card {
+            background: white;
+            border: 1px solid #e5eeee;
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 28px;
+        }
+
+        .search-card h3 {
+            color: #315758;
+            font-size: 16px;
+            margin-bottom: 14px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-form input {
+            flex: 1;
+            min-width: 0;
+            padding: 13px 15px;
+            border: 1px solid #dce8e6;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+            color: #315758;
+        }
+
+        .search-form input:focus {
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.10);
+        }
+
+        .btn {
+            display: inline-block;
+            border: none;
+            border-radius: 7px;
+            padding: 10px 15px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .btn-search,
+        .btn-primary {
+            background: #0d9488;
+            color: white;
+        }
+
+        .btn-search:hover,
+        .btn-primary:hover {
+            background: #087c73;
+        }
+
+        .btn-light {
+            background: #e5f7f3;
+            color: #087f65;
+        }
+
+        .btn-light:hover {
+            background: #d1eee7;
+        }
+
+        .btn-danger {
+            background: #fff0ef;
+            color: #c44740;
+        }
+
+        .btn-danger:hover {
+            background: #fce0de;
+        }
+
+        .section-card {
+            background: white;
+            border: 1px solid #e5eeee;
+            border-radius: 14px;
+            padding: 25px;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 25px rgba(30, 70, 70, 0.03);
+        }
+
+        .section-heading {
+            color: #315758;
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .section-description {
+            color: #829394;
+            font-size: 13px;
+            margin-top: -12px;
+            margin-bottom: 20px;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 12px;
+            background: #f3f8f7;
+            color: #718486;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 17px 12px;
+            border-bottom: 1px solid #edf2f1;
+            color: #526b6c;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        tbody tr:hover {
+            background: #f9fcfb;
+        }
+
+        .document-name {
+            color: #315758;
+            font-weight: 700;
+        }
+
+        .date {
+            color: #829394;
+            white-space: nowrap;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-bottom: 16px;
+        }
+
+        .access-list {
+            background: #f7faf9;
+            border: 1px solid #e8efed;
+            border-radius: 9px;
+            padding: 12px;
+            min-width: 190px;
+        }
+
+        .access-title {
+            color: #315758;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .permission-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 9px 0;
+            border-top: 1px solid #e5eeee;
+            color: #526b6c;
+            font-size: 12px;
+        }
+
+        .no-access {
+            color: #829394;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #829394;
+        }
+
+        .empty-state .icon {
+            font-size: 35px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state h3 {
+            color: #315758;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .bottom-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 30px 0;
+        }
+
+        .footer {
+            text-align: center;
+            color: #9aabab;
+            font-size: 12px;
+            padding: 25px;
+        }
+
+        @media(max-width: 600px) {
+            .navbar {
+                padding: 18px 5%;
+            }
+
+            .container {
+                margin-top: 30px;
+            }
+
+            .heading h1 {
+                font-size: 24px;
+            }
+
+            .section-card {
+                padding: 18px;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .btn-search {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="logo">Trust<span>Vault.</span></div>
+
+        <a href="{% url 'dashboard' %}" class="nav-link">
+            ← Dashboard
+        </a>
+    </header>
+
+    <main class="container">
+
+        <section class="heading">
+            <h1>My Documents</h1>
+            <p>Manage, search and securely share your documents in TrustVault.</p>
+        </section>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Search Section -->
+
+        <section class="search-card">
+
+            <h3>🔍 Search Documents</h3>
+
+            <form method="GET"
+                  action="{% url 'document_list' %}"
+                  class="search-form">
+
+                <input
+                    type="text"
+                    name="q"
+                    placeholder="Enter document title..."
+                    value="{{ search_query }}"
+                >
+
+                <button type="submit" class="btn btn-search">
+                    Search
+                </button>
+
+                {% if search_query %}
+                    <a href="{% url 'document_list' %}"
+                       class="btn btn-light">
+                        Clear
+                    </a>
+                {% endif %}
+
+            </form>
+
+        </section>
+
+        <!-- My Documents -->
+
+        <section class="section-card">
+
+            <h2 class="section-heading">📁 My Documents</h2>
+
+            <p class="section-description">
+                Documents uploaded and managed by you.
+            </p>
+
+            {% if documents %}
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Document Title</th>
+                                <th>Uploaded Date</th>
+                                <th>Actions and Access Management</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for doc in documents %}
+
+                                <tr>
+
+                                    <td class="document-name">
+                                        {{ doc.title }}
+                                    </td>
+
+                                    <td class="date">
+                                        {{ doc.uploaded_at|date:"d M Y, h:i A" }}
+                                    </td>
+
+                                    <td>
+
+                                        <div class="actions">
+
+                                            <a href="{% url 'access_document' doc.id %}"
+                                               class="btn btn-primary">
+                                                View
+                                            </a>
+
+                                            <a href="{% url 'share_document' doc.id %}"
+                                               class="btn btn-light">
+                                                Share
+                                            </a>
+
+                                            <a href="{% url 'edit_document' doc.id %}"
+                                               class="btn btn-light">
+                                                Edit
+                                            </a>
+
+                                        </div>
+
+                                        <div class="access-list">
+
+                                            <div class="access-title">
+                                                Users with access
+                                            </div>
+
+                                            {% for perm in doc.permissions.all %}
+
+                                                <div class="permission-item">
+
+                                                    <span>
+                                                        {{ perm.shared_with.username }}
+                                                        — {{ perm.get_permission_display }}
+                                                    </span>
+
+                                                    <form method="POST"
+                                                          action="{% url 'revoke_access' doc.id perm.shared_with_id %}">
+
+                                                        {% csrf_token %}
+
+                                                        <button type="submit"
+                                                                class="btn btn-danger"
+                                                                onclick="return confirm('Are you sure you want to revoke access?');">
+                                                            Revoke
+                                                        </button>
+
+                                                    </form>
+
+                                                </div>
+
+                                            {% empty %}
+
+                                                <p class="no-access">
+                                                    No users have access yet.
+                                                </p>
+
+                                            {% endfor %}
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <div class="icon">📂</div>
+
+                    <h3>No Documents Found</h3>
+
+                    <p>
+                        {% if search_query %}
+                            No documents match "{{ search_query }}".
+                            Try another search.
+                        {% else %}
+                            You haven't uploaded any documents yet.
+                        {% endif %}
+                    </p>
+                </div>
+
+            {% endif %}
+
+        </section>
+
+        <!-- Shared With Me -->
+
+        <section class="section-card">
+
+            <h2 class="section-heading">📨 Shared With Me</h2>
+
+            <p class="section-description">
+                Documents shared with you by other users.
+            </p>
+
+            {% if shared_documents %}
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Document Title</th>
+                                <th>Owner</th>
+                                <th>Permission</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for doc in shared_documents %}
+
+                                <tr>
+
+                                    <td class="document-name">
+                                        {{ doc.title }}
+                                    </td>
+
+                                    <td>
+                                        {{ doc.owner.username }}
+                                    </td>
+
+                                    <td>
+                                        {% for perm in doc.permissions.all %}
+                                            {% if perm.shared_with_id == user.id %}
+                                                <span class="action-badge">
+                                                    {{ perm.get_permission_display }}
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+
+                                    <td>
+
+                                        <div class="actions">
+
+                                            <a href="{% url 'access_document' doc.id %}"
+                                               class="btn btn-primary">
+                                                View
+                                            </a>
+
+                                            {% for perm in doc.permissions.all %}
+
+                                                {% if perm.shared_with_id == user.id and perm.permission == 'edit' %}
+
+                                                    <a href="{% url 'edit_document' doc.id %}"
+                                                       class="btn btn-light">
+                                                        Edit
+                                                    </a>
+
+                                                {% endif %}
+
+                                            {% endfor %}
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+
+                    <h3>No Shared Documents</h3>
+
+                    <p>
+                        {% if search_query %}
+                            No shared documents match "{{ search_query }}".
+                        {% else %}
+                            No documents have been shared with you yet.
+                        {% endif %}
+                    </p>
+                </div>
+
+            {% endif %}
+
+        </section>
+
+        <!-- Bottom Navigation -->
+
+        <div class="bottom-actions">
+
+            <a href="{% url 'upload' %}" class="btn btn-primary">
+                + Upload Another Document
+            </a>
+
+            <a href="{% url 'dashboard' %}" class="btn btn-light">
+                Back to Dashboard
+            </a>
+
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        © 2026 TrustVault. Secure Document Management System.
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,320 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TrustVault | Login</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'DM Sans', Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f3f8f7;
+            display: flex;
+            flex-direction: column;
+            color: #203638;
+        }
+
+        .navbar {
+            background: white;
+            padding: 20px 7%;
+            border-bottom: 1px solid #e5eeee;
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: 800;
+            color: #173f40;
+        }
+
+        .logo span {
+            color: #0d9488;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 430px;
+            background: white;
+            padding: 40px;
+            border-radius: 18px;
+            border: 1px solid #e5eeee;
+            box-shadow: 0 12px 35px rgba(30, 70, 70, 0.06);
+        }
+
+        .icon {
+            width: 58px;
+            height: 58px;
+            background: #e5f7f3;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin: 0 auto 20px;
+        }
+
+        .heading {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .heading h1 {
+            font-size: 27px;
+            color: #173f40;
+            margin-bottom: 9px;
+        }
+
+        .heading p {
+            color: #829394;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .messages {
+            margin-bottom: 18px;
+        }
+
+        .messages p {
+            background: #fff0ed;
+            color: #b94c3d;
+            padding: 11px 13px;
+            border-radius: 7px;
+            font-size: 12px;
+            margin-bottom: 7px;
+        }
+
+        .field {
+            margin-bottom: 21px;
+        }
+
+        .field label {
+            display: block;
+            color: #365657;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 9px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #dce8e7;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+            color: #365657;
+        }
+
+        .field input:focus {
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.08);
+        }
+
+        /* SHOW / HIDE PASSWORD */
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper input {
+            padding-right: 65px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            color: #0d9488;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .toggle-password:hover {
+            color: #087f75;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #0d9488;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #087f75;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 24px;
+            color: #829394;
+            font-size: 13px;
+        }
+
+        .register-link a {
+            color: #0d9488;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            text-align: center;
+            color: #9aabab;
+            font-size: 12px;
+            padding: 20px;
+        }
+
+        @media(max-width: 480px) {
+            .login-card {
+                padding: 28px 22px;
+            }
+
+            .heading h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="logo">Trust<span>Vault.</span></div>
+    </header>
+
+
+    <main class="main">
+
+        <section class="login-card">
+
+            <div class="icon">🔐</div>
+
+            <div class="heading">
+                <h1>Welcome Back!</h1>
+                <p>Sign in to access your secure document workspace.</p>
+            </div>
+
+
+            <div class="messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <div class="field">
+                    <label for="username">Username</label>
+
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="Enter your username"
+                        required
+                    >
+                </div>
+
+
+                <div class="field">
+                    <label for="password">Password</label>
+
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Enter your password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="toggle-password"
+                            onclick="togglePassword()"
+                        >
+                            Show
+                        </button>
+
+                    </div>
+                </div>
+
+
+                <button type="submit" class="login-btn">
+                    Sign In →
+                </button>
+
+            </form>
+
+
+            <div class="register-link">
+                Don't have an account?
+                <a href="{% url 'register' %}">Create Account</a>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer class="footer">
+        © 2026 TrustVault. Secure Document Management System.
+    </footer>
+
+
+    <script>
+        function togglePassword() {
+
+            const password = document.getElementById("password");
+            const button = document.querySelector(".toggle-password");
+
+            if (password.type === "password") {
+                password.type = "text";
+                button.textContent = "Hide";
+            } else {
+                password.type = "password";
+                button.textContent = "Show";
+            }
+
+        }
+    </script>
+
+</body>
+</html>

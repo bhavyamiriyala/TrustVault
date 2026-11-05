@@ -1,0 +1,341 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TrustVault | Audit Trail</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'DM Sans', Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f8f8;
+            color: #203638;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            padding: 20px 7%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5eeee;
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: 800;
+            color: #173f40;
+        }
+
+        .logo span {
+            color: #0d9488;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #0d9488;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 45px auto;
+            padding: 0 20px;
+        }
+
+        .heading {
+            margin-bottom: 28px;
+        }
+
+        .heading h1 {
+            color: #173f40;
+            font-size: 29px;
+            margin-bottom: 9px;
+        }
+
+        .heading p {
+            color: #829394;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-card {
+            background: white;
+            border: 1px solid #e5eeee;
+            border-radius: 14px;
+            padding: 22px 25px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .info-icon {
+            width: 48px;
+            height: 48px;
+            background: #e5f7f3;
+            color: #0d9488;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 23px;
+        }
+
+        .info-card h3 {
+            color: #315758;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .info-card p {
+            color: #829394;
+            font-size: 12px;
+        }
+
+        .table-card {
+            background: white;
+            border: 1px solid #e5eeee;
+            border-radius: 14px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(30, 70, 70, 0.03);
+        }
+
+        .table-heading {
+            color: #315758;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 22px;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 12px;
+            background: #f3f8f7;
+            color: #718486;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 17px 12px;
+            border-bottom: 1px solid #edf2f1;
+            color: #526b6c;
+            font-size: 13px;
+        }
+
+        tbody tr:hover {
+            background: #f9fcfb;
+        }
+
+        .document-name {
+            color: #315758;
+            font-weight: 700;
+        }
+
+        .actor {
+            color: #526b6c;
+            font-weight: 600;
+        }
+
+        .action-badge {
+            display: inline-block;
+            padding: 6px 11px;
+            border-radius: 20px;
+            background: #e5f7f1;
+            color: #087f65;
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .details {
+            color: #829394;
+            max-width: 250px;
+            line-height: 1.5;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 45px 20px;
+            color: #829394;
+        }
+
+        .empty-state .icon {
+            font-size: 35px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state h3 {
+            color: #315758;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+        }
+
+        .footer {
+            text-align: center;
+            color: #9aabab;
+            font-size: 12px;
+            padding: 25px;
+        }
+
+        @media(max-width: 600px) {
+            .navbar {
+                padding: 18px 5%;
+            }
+
+            .container {
+                margin-top: 30px;
+            }
+
+            .heading h1 {
+                font-size: 24px;
+            }
+
+            .table-card {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="logo">Trust<span>Vault.</span></div>
+
+        <a href="{% url 'dashboard' %}" class="back-link">
+            ← Dashboard
+        </a>
+    </header>
+
+    <main class="container">
+
+        <section class="heading">
+            <h1>Audit Trail</h1>
+            <p>Track document activities and monitor access history in TrustVault.</p>
+        </section>
+
+        <section class="info-card">
+            <div class="info-icon">📋</div>
+
+            <div>
+                <h3>Document Activity History</h3>
+                <p>Review uploads, document access, sharing, edits and revoked permissions.</p>
+            </div>
+        </section>
+
+        <section class="table-card">
+
+            <h2 class="table-heading">Recent Activities</h2>
+
+            {% if logs %}
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>User</th>
+                                <th>Activity</th>
+                                <th>Details</th>
+                                <th>Date & Time</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for log in logs %}
+
+                                <tr>
+
+                                    <td class="document-name">
+                                        {% if log.document %}
+                                            {{ log.document.title }}
+                                        {% else %}
+                                            Deleted Document
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="actor">
+                                        {% if log.actor %}
+                                            {{ log.actor.username }}
+                                        {% else %}
+                                            Unknown User
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <span class="action-badge">
+                                            {{ log.get_action_display }}
+                                        </span>
+                                    </td>
+
+                                    <td class="details">
+                                        {{ log.details }}
+                                    </td>
+
+                                    <td>
+                                        {{ log.timestamp|date:"d M Y, h:i A" }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <h3>No Activities Yet</h3>
+                    <p>Your document activity history will appear here.</p>
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        © 2026 TrustVault. Secure Document Management System.
+    </footer>
+
+</body>
+</html>

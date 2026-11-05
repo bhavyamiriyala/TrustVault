@@ -1,0 +1,306 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TrustVault | Upload Document</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'DM Sans', Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f8f8;
+            color: #203638;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            padding: 20px 7%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5eeee;
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: 800;
+            color: #173f40;
+        }
+
+        .logo span {
+            color: #0d9488;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #0d9488;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 55px auto;
+            padding: 0 20px;
+        }
+
+        .heading {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .heading h1 {
+            color: #173f40;
+            font-size: 29px;
+            margin-bottom: 10px;
+        }
+
+        .heading p {
+            color: #829394;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .upload-card {
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            border: 1px solid #e5eeee;
+            box-shadow: 0 8px 25px rgba(30, 70, 70, 0.04);
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .messages p {
+            padding: 12px 15px;
+            border-radius: 8px;
+            background: #e5f7f1;
+            color: #087f65;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .field {
+            margin-bottom: 24px;
+        }
+
+        .field label {
+            display: block;
+            color: #365657;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .field input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #dce8e7;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+            color: #365657;
+        }
+
+        .field input[type="text"]:focus {
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.08);
+        }
+
+        .file-area {
+            border: 2px dashed #a9dcd4;
+            background: #f3fbf9;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .file-icon {
+            font-size: 38px;
+            margin-bottom: 12px;
+        }
+
+        .file-area h3 {
+            color: #315758;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .file-area p {
+            color: #8b9d9e;
+            font-size: 12px;
+            margin-bottom: 18px;
+        }
+
+        .file-area input[type="file"] {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: auto;
+            color: #637b7b;
+            font-size: 12px;
+        }
+
+        .file-info {
+            background: #f5f8f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 22px;
+        }
+
+        .file-info p {
+            font-size: 12px;
+            color: #718486;
+            line-height: 1.9;
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 14px;
+            background: #0d9488;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: 0.2s;
+        }
+
+        .upload-btn:hover {
+            background: #087f75;
+        }
+
+        .footer {
+            text-align: center;
+            color: #9aabab;
+            font-size: 12px;
+            padding: 25px;
+        }
+
+        @media(max-width: 500px) {
+            .upload-card {
+                padding: 22px;
+            }
+
+            .heading h1 {
+                font-size: 24px;
+            }
+
+            .navbar {
+                padding: 18px 5%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="logo">Trust<span>Vault.</span></div>
+        <a href="{% url 'dashboard' %}" class="back-link">
+            ← Dashboard
+        </a>
+    </header>
+
+
+    <main class="container">
+
+        <section class="heading">
+            <h1>Upload Your Document</h1>
+            <p>Securely add your important documents to your TrustVault workspace.</p>
+        </section>
+
+
+        <section class="upload-card">
+
+            <!-- SUCCESS AND ERROR MESSAGES -->
+
+            <div class="messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+
+
+            <!-- UPLOAD FORM -->
+
+            <form method="POST" enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                <div class="field">
+                    <label for="title">Document Title</label>
+
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        placeholder="Enter document title"
+                        required
+                    >
+                </div>
+
+
+                <div class="field">
+
+                    <label>Select Document</label>
+
+                    <div class="file-area">
+
+                        <div class="file-icon">📁</div>
+
+                        <h3>Choose a document to upload</h3>
+
+                        <p>Select a file from your computer</p>
+
+                        <input
+                            type="file"
+                            name="file"
+                            accept=".pdf,.doc,.docx,.txt"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="file-info">
+                    <p>✓ Supported formats: PDF, DOC, DOCX, TXT</p>
+                    <p>✓ Maximum file size: 5 MB</p>
+                    <p>✓ Your document will be stored in TrustVault.</p>
+                </div>
+
+
+                <button type="submit" class="upload-btn">
+                    Upload Document →
+                </button>
+
+            </form>
+
+        </section>
+
+    </main>
+
+
+    <footer class="footer">
+        © 2026 TrustVault. Secure Document Management System.
+    </footer>
+
+</body>
+</html>

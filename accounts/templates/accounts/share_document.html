@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TrustVault | Share Document</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'DM Sans', Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f8f8;
+            color: #203638;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            padding: 20px 7%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5eeee;
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: 800;
+            color: #173f40;
+        }
+
+        .logo span {
+            color: #0d9488;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #0d9488;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 55px auto;
+            padding: 0 20px;
+        }
+
+        .heading {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .heading h1 {
+            color: #173f40;
+            font-size: 29px;
+            margin-bottom: 10px;
+        }
+
+        .heading p {
+            color: #829394;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .card {
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            border: 1px solid #e5eeee;
+            box-shadow: 0 8px 25px rgba(30, 70, 70, 0.04);
+            margin-bottom: 25px;
+        }
+
+        .document-info {
+            background: #f3fbf9;
+            border: 1px solid #dcefeb;
+            border-radius: 10px;
+            padding: 17px;
+            margin-bottom: 25px;
+        }
+
+        .document-info p {
+            color: #718486;
+            font-size: 12px;
+            margin-bottom: 7px;
+        }
+
+        .document-info h3 {
+            color: #0d8278;
+            font-size: 16px;
+            word-break: break-word;
+        }
+
+        .section-title {
+            color: #315758;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 22px;
+        }
+
+        .messages p {
+            padding: 12px 15px;
+            border-radius: 8px;
+            background: #e5f7f1;
+            color: #087f65;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .field {
+            margin-bottom: 22px;
+        }
+
+        .field label {
+            display: block;
+            color: #365657;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #dce8e7;
+            border-radius: 8px;
+            outline: none;
+            background: white;
+            color: #365657;
+            font-size: 14px;
+        }
+
+        .field input:focus,
+        .field select:focus {
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.08);
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #8b9d9e;
+            margin-top: 8px;
+        }
+
+        .share-btn {
+            width: 100%;
+            padding: 14px;
+            background: #0d9488;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .share-btn:hover {
+            background: #087f75;
+        }
+
+        .permission-list {
+            margin-top: 10px;
+        }
+
+        .permission-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 16px;
+            border: 1px solid #e5eeee;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .user-details strong {
+            display: block;
+            color: #315758;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .user-details span {
+            color: #8b9d9e;
+            font-size: 12px;
+        }
+
+        .permission-badge {
+            padding: 6px 11px;
+            border-radius: 20px;
+            background: #e5f7f1;
+            color: #087f65;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #8b9d9e;
+            padding: 20px;
+            font-size: 13px;
+            background: #f8fbfb;
+            border-radius: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            color: #9aabab;
+            font-size: 12px;
+            padding: 25px;
+        }
+
+        @media(max-width: 500px) {
+            .card {
+                padding: 22px;
+            }
+
+            .heading h1 {
+                font-size: 24px;
+            }
+
+            .permission-item {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .navbar {
+                padding: 18px 5%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="logo">Trust<span>Vault.</span></div>
+
+        <a href="{% url 'document_list' %}" class="back-link">
+            ← My Documents
+        </a>
+    </header>
+
+
+    <main class="container">
+
+        <section class="heading">
+            <h1>Share Document</h1>
+            <p>Give other registered users secure access to your documents.</p>
+        </section>
+
+
+        <section class="card">
+
+            <div class="document-info">
+                <p>Document selected for sharing</p>
+                <h3>{{ document.title }}</h3>
+            </div>
+
+
+            <div class="messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+
+
+            <h2 class="section-title">Grant Document Access</h2>
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <div class="field">
+                    <label for="username">Recipient Username</label>
+
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        placeholder="Enter registered username"
+                        required
+                    >
+
+                    <p class="help-text">
+                        Enter the username of the person you want to share with.
+                    </p>
+                </div>
+
+
+                <div class="field">
+                    <label for="permission">Choose Permission</label>
+
+                    <select id="permission" name="permission" required>
+                        <option value="read">Read Only - Can view and download</option>
+                        <option value="edit">Edit Access - Can view, download and edit</option>
+                    </select>
+                </div>
+
+
+                <button type="submit" class="share-btn">
+                    Share Document →
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <section class="card">
+
+            <h2 class="section-title">Existing Access</h2>
+
+            <div class="permission-list">
+
+                {% for item in existing_permissions %}
+
+                    <div class="permission-item">
+
+                        <div class="user-details">
+                            <strong>{{ item.shared_with.username }}</strong>
+                            <span>Access granted to this document</span>
+                        </div>
+
+                        <span class="permission-badge">
+                            {{ item.get_permission_display }}
+                        </span>
+
+                    </div>
+
+                {% empty %}
+
+                    <div class="empty-state">
+                        No users have access to this document yet.
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer class="footer">
+        © 2026 TrustVault. Secure Document Management System.
+    </footer>
+
+</body>
+</html>
