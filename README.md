@@ -1,26 +1,59 @@
 # TrustVault – Secure Document Sharing System
 
-TrustVault is a Django-based web application designed to provide secure document storage and controlled document sharing. It allows users to upload documents, share them with other registered users, manage access permissions, and track document activities through an audit trail.
+TrustVault is a Django-based web application designed to provide secure document storage and controlled document sharing. It allows registered users to upload documents, share them with other users, manage access permissions, and track document activities through an audit trail.
+
+**Live Website:** https://trustvault-wscr.onrender.com
+
+**GitHub Repository:** https://github.com/bhavyamiriyala/TrustVault
 
 ## Features
 
-- **User Registration and Login:** User authentication with email OTP verification.
-- **Document Upload:** Upload PDF, DOC, DOCX, and TXT files with file size validation.
-- **Document Management:** View and search uploaded documents.
-- **Secure Document Sharing:** Share documents with registered users.
-- **Access Permissions:** Assign Read or Edit permissions to shared users.
-- **Document Access Control:** Only document owners and authorized users can access documents through the application.
-- **Access Revocation:** Document owners can revoke previously granted permissions.
-- **Document Editing:** Users with Edit permission can edit shared documents.
-- **Audit Trail:** Track document uploads, sharing, access, editing, and permission revocation.
+### User Authentication
+- User registration with username, email, and password.
+- Secure login and logout.
+- Django-based password hashing and authentication.
+- Separate administrator login through Django Admin.
+- Admin-assisted forgot password request system.
+- Users can change their passwords after login.
+
+### Document Management
+- Upload PDF, DOC, DOCX, and TXT files.
+- Maximum file upload size: 30 MB.
+- File extension, content, and size validation.
+- View and search uploaded documents.
+- Edit documents based on access permissions.
+
+### Secure Document Sharing
+- Share documents with registered users.
+- Assign Read or Edit permissions.
+- Only document owners and authorized users can access documents through the application.
+- Document owners can revoke previously granted permissions.
+
+### Audit Trail
+Track important document activities, including:
+- Document uploads.
+- Document sharing.
+- Document access.
+- Document editing.
+- Permission revocation.
+
+### Administrator Features
+- Django Admin dashboard.
+- Manage documents, sharing permissions, and audit logs.
+- View password reset requests.
+- Generate temporary passwords for verified password reset requests.
 
 ## Technologies Used
 
-- **Frontend:** HTML, CSS, Bootstrap
-- **Backend:** Python, Django
-- **Database:** SQLite
-- **Email Service:** Gmail SMTP
-- **Version Control:** Git and GitHub
+| Component | Technology |
+|---|---|
+| Frontend | HTML, CSS, Bootstrap |
+| Backend | Python, Django |
+| Local Database | SQLite |
+| Production Database | PostgreSQL |
+| Deployment | Render |
+| Static Files | WhiteNoise |
+| Version Control | Git and GitHub |
 
 ## Project Structure
 
@@ -30,6 +63,8 @@ TrustVault/
 ├── accounts/
 │   ├── migrations/
 │   ├── templates/
+│   │   └── accounts/
+│   ├── admin.py
 │   ├── models.py
 │   ├── views.py
 │   ├── urls.py
@@ -40,9 +75,12 @@ TrustVault/
 │   ├── urls.py
 │   └── wsgi.py
 │
+├── build.sh
 ├── manage.py
 ├── requirements.txt
 ├── .gitignore
+├── PROMPTS.md
+├── THREATS.md
 └── README.md
 ```
 
@@ -51,7 +89,7 @@ TrustVault/
 ### 1. Clone the repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/bhavyamiriyala/TrustVault.git
 cd TrustVault
 ```
 
@@ -77,18 +115,17 @@ pip install -r requirements.txt
 
 ### 5. Configure environment variables
 
-Create a `.env` file in the project root and configure:
+Create a `.env` file in the project root and configure the variables required by `trustvault/settings.py`.
+
+Example:
 
 ```env
 DJANGO_DEBUG=True
 DJANGO_SECRET_KEY=your-secret-key
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
-
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-gmail-app-password
 ```
 
-Never upload your `.env` file or expose your email credentials.
+Never upload your `.env` file or expose secret keys and credentials.
 
 ### 6. Apply database migrations
 
@@ -96,15 +133,48 @@ Never upload your `.env` file or expose your email credentials.
 python manage.py migrate
 ```
 
-### 7. Run the development server
+### 7. Create an administrator account
+
+```bash
+python manage.py createsuperuser
+```
+
+Follow the prompts to create your administrator account.
+
+### 8. Run the development server
 
 ```bash
 python manage.py runserver
 ```
 
-Open the application at:
+Open the application:
 
 http://127.0.0.1:8000/
+
+## Administrator Access
+
+The administrator dashboard is available at:
+
+https://trustvault-wscr.onrender.com/admin/
+
+Administrators can manage application records and review password reset requests.
+
+For security, administrators should verify a user's identity before generating and sharing a temporary password. Temporary passwords should be shared through a verified secure channel.
+
+## Deployment
+
+TrustVault is deployed using Render.
+
+**Live Application:** https://trustvault-wscr.onrender.com
+
+The deployment process uses `build.sh` to:
+- Install Python dependencies.
+- Collect static files.
+- Apply database migrations.
+
+The production environment uses PostgreSQL.
+
+**Note:** The free Render instance may spin down after inactivity, so the first request can take additional time to load.
 
 ## Testing
 
@@ -114,19 +184,36 @@ Run the automated tests using:
 python manage.py test accounts
 ```
 
-The current test suite contains 15 tests covering important application features and access-control scenarios.
+The current test suite contains **20 automated tests** covering important application features, authentication, document operations, and access-control scenarios.
+
+Run Django system checks using:
+
+```bash
+python manage.py check
+```
 
 ## Security Considerations
 
 - Django password hashing and authentication.
-- Email OTP verification during registration.
-- File extension and file size validation.
+- CSRF protection for forms and state-changing requests.
+- File extension, content, and file size validation.
+- Maximum upload size of 30 MB.
 - Permission-based document access.
 - Read and Edit access controls.
 - POST-based access revocation.
-- CSRF protection and secure production settings configuration.
+- Audit logging of important document activities.
+- Environment-based configuration for sensitive settings.
 
-**Note:** This project is a development-stage application. Additional production security measures, including malware scanning, stronger file validation, rate limiting, private production file storage, and production database configuration, are recommended before handling sensitive real-world documents.
+### Future Security Improvements
+
+- Malware scanning for uploaded documents.
+- Stronger file content validation.
+- Login and password-reset rate limiting.
+- Private production file storage with protected downloads.
+- Improved administrator identity verification.
+- Additional security monitoring and testing.
+
+**Security Note:** TrustVault is a fresher hiring challenge project and should receive additional security testing and hardening before being used to store sensitive real-world documents.
 
 ## Author
 

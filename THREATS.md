@@ -8,7 +8,7 @@ It allows registered users to upload, manage and share documents with other user
 
 The main security objective is to ensure that only authorized users can access or modify documents and that important activities are recorded in an audit trail.
 
-This document identifies potential threats, their impact, and the security measures required to prevent them.
+This document identifies potential threats, their impact, implemented security measures and areas requiring further improvement.
 
 ---
 
@@ -20,10 +20,11 @@ The following assets must be protected:
 2. Uploaded documents and their contents.
 3. Document ownership information.
 4. Read and Edit permissions.
-5. Email OTP verification codes.
-6. Audit trail records.
-7. Application configuration and secret keys.
-8. User session information.
+5. Audit trail records.
+6. Application configuration and secret keys.
+7. User session information.
+8. Administrator accounts and privileges.
+9. Password reset requests and temporary passwords.
 
 ---
 
@@ -86,7 +87,7 @@ Legitimate users may lose access to important documents.
 
 - Allow only the document owner to manage sharing permissions.
 - Verify document ownership before revoking access.
-- Validate the requested permission changes on the server.
+- Validate requested permission changes on the server.
 
 **Security Test:**
 
@@ -105,7 +106,7 @@ Malicious files may affect the application or other users who download them.
 **Mitigation:**
 
 - Restrict allowed file extensions.
-- Enforce maximum file size.
+- Enforce a maximum file size of 30 MB.
 - Validate uploaded files on the server.
 - Consider MIME type and file-content validation.
 - Use malware scanning for production uploads.
@@ -128,7 +129,7 @@ The attacker may gain access to private documents and account information.
 
 - Use Django authentication.
 - Store passwords using secure password hashing.
-- Verify email addresses using OTP during registration.
+- Require authentication for protected application features.
 - Apply appropriate login protections.
 - Use secure session settings.
 
@@ -136,27 +137,27 @@ The attacker may gain access to private documents and account information.
 
 Attempt login using invalid credentials and verify that unauthorized login attempts are rejected.
 
-### Threat 6: OTP Guessing and Abuse
+### Threat 6: Password Reset Abuse
 
 **Description:**
 
-An attacker may repeatedly request or guess OTP verification codes.
+An attacker may submit a password reset request for another user's account or try to obtain a temporary password without authorization.
 
 **Impact:**
 
-Account verification may be abused or disrupted.
+An attacker may gain control of a legitimate user's account.
 
 **Mitigation:**
 
-- Set an expiry time for OTP codes.
-- Limit OTP verification attempts.
-- Apply rate limiting to OTP requests.
-- Avoid exposing OTP values in production responses or logs.
-- Invalidate OTP codes after successful verification.
+- Record password reset requests for administrator review.
+- Require administrators to verify the user's identity before approving a reset.
+- Generate a temporary password through the administrative process.
+- Share temporary passwords only through a secure channel.
+- Ask users to change temporary passwords immediately.
 
 **Security Test:**
 
-Check OTP expiry, invalid OTP handling and verification attempt limits.
+Submit a password reset request and verify that it requires administrator processing rather than directly changing the account password.
 
 ### Threat 7: Audit Trail Tampering
 
@@ -172,7 +173,7 @@ Important activity records may become unreliable, reducing accountability.
 
 - Restrict audit trail access to authorized users.
 - Record important document activities on the server.
-- Store the actor, document, action and timestamp.
+- Store the actor, document, action and timestamp where applicable.
 - Prevent ordinary users from modifying audit records.
 - Consider stronger audit log protection for production.
 
@@ -192,8 +193,8 @@ Actions such as editing documents, sharing documents or revoking permissions may
 
 **Mitigation:**
 
-- Enable Django CSRF protection.
-- Include CSRF tokens in forms.
+- Use Django CSRF protection.
+- Include CSRF tokens in applicable forms.
 - Use POST requests for sensitive operations.
 - Avoid performing sensitive actions through GET requests.
 
@@ -205,7 +206,7 @@ Submit a sensitive POST request without a valid CSRF token and verify that it is
 
 **Description:**
 
-Secret keys, email passwords, database credentials or other sensitive configuration values may accidentally become publicly accessible.
+Secret keys, database credentials or other sensitive configuration values may accidentally become publicly accessible.
 
 **Impact:**
 
@@ -237,10 +238,10 @@ Confidential documents may be exposed, modified or lost.
 
 - Use HTTPS in production.
 - Configure secure cookies and allowed hosts.
-- Use private file storage.
+- Use private file storage with authenticated access.
 - Restrict direct access to uploaded documents.
-- Configure database backups.
-- Apply production security settings.
+- Configure database and file backups.
+- Apply appropriate production security settings.
 
 **Security Test:**
 
@@ -250,20 +251,20 @@ Open the deployed website in a private browser window and test document access u
 
 ## 4. Security Testing Plan
 
-The following security tests must be performed before final submission.
+The following security tests are planned. Record actual results after executing them.
 
-| Test ID | Security Test                               | Expected Result       |
-| ------- | ------------------------------------------- | --------------------- |
-| ST01    | Unauthorized user accesses private document | Access denied         |
-| ST02    | Read user attempts to edit document         | Editing denied        |
-| ST03    | Edit user edits an authorized document      | Editing allowed       |
-| ST04    | Non-owner attempts to revoke access         | Access denied         |
-| ST05    | Unsupported file upload                     | Upload rejected       |
-| ST06    | Oversized file upload                       | Upload rejected       |
-| ST07    | Invalid login attempt                       | Login rejected        |
-| ST08    | Invalid or expired OTP                      | Verification rejected |
-| ST09    | User accesses another owner's audit trail   | Access denied         |
-| ST10    | POST request without valid CSRF token       | Request rejected      |
+| Test ID | Security Test | Expected Result |
+|---|---|---|
+| ST01 | Unauthorized user accesses private document | Access denied |
+| ST02 | Read user attempts to edit document | Editing denied |
+| ST03 | Edit user edits an authorized document | Editing allowed |
+| ST04 | Non-owner attempts to revoke access | Access denied |
+| ST05 | Unsupported file upload | Upload rejected |
+| ST06 | Oversized file upload | Upload rejected |
+| ST07 | Invalid login attempt | Login rejected |
+| ST08 | Password reset request | Administrator review required |
+| ST09 | User accesses another owner's audit trail | Access denied |
+| ST10 | POST request without valid CSRF token | Request rejected |
 
 **Note:** These are planned security tests. Record the actual results after executing them. Do not mark a test as passed without evidence.
 
@@ -271,18 +272,18 @@ The following security tests must be performed before final submission.
 
 ## 5. Risk Assessment
 
-| Threat                          | Potential Impact               | Priority |
-| ------------------------------- | ------------------------------ | -------- |
-| Unauthorized document access    | Confidentiality loss           | Critical |
-| Privilege escalation            | Unauthorized modification      | Critical |
-| Permission revocation abuse     | Loss of access control         | High     |
-| Malicious file upload           | Application or user compromise | High     |
-| Account impersonation           | Account compromise             | High     |
-| OTP abuse                       | Authentication compromise      | High     |
-| Audit trail tampering           | Loss of accountability         | High     |
-| CSRF                            | Unauthorized actions           | High     |
-| Sensitive information exposure  | Application compromise         | Critical |
-| Insecure deployment and storage | Data exposure or loss          | Critical |
+| Threat | Potential Impact | Priority |
+|---|---|---|
+| Unauthorized document access | Confidentiality loss | Critical |
+| Privilege escalation | Unauthorized modification | Critical |
+| Permission revocation abuse | Loss of access control | High |
+| Malicious file upload | Application or user compromise | High |
+| Account impersonation | Account compromise | High |
+| Password reset abuse | Account compromise | High |
+| Audit trail tampering | Loss of accountability | High |
+| CSRF | Unauthorized actions | High |
+| Sensitive information exposure | Application compromise | Critical |
+| Insecure deployment and storage | Data exposure or loss | Critical |
 
 ---
 
@@ -292,11 +293,13 @@ The following areas require additional verification or improvement before produc
 
 1. Malware scanning for uploaded documents.
 2. Stronger file-content and MIME validation.
-3. Rate limiting for login and OTP verification.
+3. Rate limiting for login and password reset requests.
 4. Private production file storage.
-5. Production database and backup configuration.
+5. Production database and file backup configuration.
 6. Additional protection for audit records.
 7. Security testing of all document authorization operations.
+8. Stronger password reset identity verification.
+9. Mandatory password changes after temporary password resets.
 
 These items must not be considered implemented unless they have actually been configured and tested.
 
@@ -322,4 +325,34 @@ TrustVault aims to provide secure document storage and sharing through authentic
 
 The main security focus is preventing unauthorized document access and ensuring that every sensitive operation is verified on the server.
 
-The identified threats and security tests will be reviewed throughout development to improve the application's security and reliability.
+The identified threats and security tests will be reviewed throughout development to improve the application's security and reliability. Additional testing and security improvements are necessary before using TrustVault for highly sensitive or confidential documents.
+
+---
+
+## 9. AI-Assisted Development: Error Identified and Corrected
+
+During development, AI initially suggested using the local Django superuser account to access the deployed application's admin dashboard.
+
+**What was wrong:**
+
+The local development environment used SQLite, whereas the deployed Render application used a separate PostgreSQL database. Therefore, the local superuser account did not automatically exist in the production database.
+
+**How I identified the issue:**
+
+I tested the admin login on the deployed website and found that the local administrator credentials did not provide production admin access. I investigated the difference between the local and production databases.
+
+**How I corrected it:**
+
+1. Identified that local and production databases were separate.
+2. Enabled administrator privileges for the existing authorized production user.
+3. Verified that administrator login worked on the live website.
+4. Removed the temporary privilege-grant command from `build.sh` after the required access was configured.
+5. Verified the deployment build process without leaving the temporary privilege-grant code in the final script.
+
+**Result:**
+
+The production administrator login worked successfully, and the temporary deployment code was removed.
+
+**What I learned:**
+
+AI-generated suggestions must be checked against the actual deployment environment. Local and production databases may contain different users and data, so deployment-specific behavior must be tested rather than assumed.

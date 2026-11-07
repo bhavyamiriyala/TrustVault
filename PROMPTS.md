@@ -1,30 +1,37 @@
-AI Prompt and Correction Log – TrustVault
+# AI Prompt and Correction Log – TrustVault
+
 This file documents how AI tools were used during the development of TrustVault. It records the prompts, AI-generated suggestions, mistakes identified, corrections made, and related Git commits.
 
 AI was used as a development assistant. All generated code and suggestions were reviewed and tested before being accepted.
 
 ## Entry 1 – Repository Security and Submission Rules
+
 **Date:** 1 November 2026
 **Task:** Understand the GitHub repository visibility requirements.
 
 **Prompt given:**
+
 "Review the Snovasys hiring challenge instructions and explain how I should manage my GitHub repository without violating their source-code confidentiality rules."
 
 **AI output:**
+
 Initially, AI suggested keeping the repository public because the submission required a public GitHub link.
 
 **What was wrong:**
+
 The initial recommendation was based on incomplete instructions. The official invitation clearly stated that the repository must not be made public before the deadline.
 
 **What I did:**
+
 I shared the complete official instructions, identified the contradiction, and changed the GitHub repository visibility to Private. I will confirm with the college placement cell when to make it public for evaluation.
 
-**Related commit**: No code commit. This was a repository visibility change.
+**Related commit:** No code commit. This was a repository visibility change.
+
+---
 
 ## Entry 2 – Authorization and Access Control
 
 **Date:** 2 November 2026
-
 **Task:** Review document ownership and authorization to prevent unauthorized users from accessing private documents.
 
 **Prompt given:**
@@ -45,16 +52,15 @@ Planned to inspect the Django views responsible for document access and verify t
 
 **Test evidence:**
 
-Pending security testing with document owners, authorized users and unauthorized users.
+Pending targeted manual security testing with document owners, authorized users and unauthorized users.
 
-**Related commit:** To be added after implementing and committing any verified corrections.
+**Related commit:** No specific correction commit identified.
 
 ---
 
 ## Entry 3 – Read and Edit Permissions
 
 **Date:** 4 November 2026 (Evening)
-
 **Task:** Verify that Read and Edit permissions are correctly enforced.
 
 **Prompt given:**
@@ -75,20 +81,19 @@ Planned to verify the existing permission checks and test Read-only and Edit use
 
 **Test evidence:**
 
-Pending:
+Pending targeted manual testing:
 
 - Read user attempting to edit a document.
 - Edit user modifying an authorized shared document.
 - User attempting to edit a document without permission.
 
-**Related commit:** To be added after verified corrections.
+**Related commit:** No specific correction commit identified.
 
 ---
 
 ## Entry 4 – Audit Trail Security
 
 **Date:** 5 November 2026
-
 **Task:** Review audit logging and prevent unauthorized access to activity records.
 
 **Prompt given:**
@@ -109,25 +114,24 @@ Planned to inspect the AuditLog model and audit trail view, verify ownership res
 
 **Test evidence:**
 
-Pending:
+Pending targeted manual testing:
 
 - Verify that document activities create audit records.
 - Attempt to view another owner's audit trail.
 - Check whether unauthorized users can modify audit records.
 
-**Related commit:** To be added after verified corrections.
+**Related commit:** No specific correction commit identified.
 
 ---
 
 ## Entry 5 – Testing and Error Handling
 
-**Date:** 5 November 2026
-
+**Date:** 6 & 7 November 2026
 **Task:** Review application tests, input validation and error handling.
 
 **Prompt given:**
 
-"Review the existing Django tests and error handling in my TrustVault application. Check document upload validation, unsupported file extensions, file size restrictions, login authentication, OTP verification, unauthorized document access and permission-related operations. Identify missing test cases, incorrect assumptions and possible security issues. Suggest additional tests and explain how to verify them."
+"Review the existing Django tests and error handling in my TrustVault application. Check document upload validation, unsupported file extensions, file size restrictions, login authentication, unauthorized document access and permission-related operations. Identify missing test cases, incorrect assumptions and possible security issues. Suggest additional tests and explain how to verify them."
 
 **AI output:**
 
@@ -135,19 +139,21 @@ AI recommended checking both successful and unsuccessful application scenarios. 
 
 **What was wrong:**
 
-The existing test cases need to be executed to confirm that they pass. Additional security scenarios may also be required. No new test failure is being claimed at this stage.
+The existing test cases needed to be executed to confirm that they passed. Additional security scenarios may also be required.
 
 **What I did:**
 
-Planned to execute the Django test suite, review any failures and add tests for missing security scenarios. Corrections will be made based on actual test results.
+Executed the Django test suite, reviewed the results and used the test outcomes to verify application behavior.
 
 **Test evidence:**
 
-Pending execution of:
+Command: `python manage.py test accounts`
 
-`python manage.py test accounts`
+Result: **20 tests passed.**
 
-**Related commit:** To be added after completing testing and committing any corrections.
+Additional targeted manual security testing may still be required.
+
+**Related commit:** Refer to the Git history for the relevant implementation and testing changes.
 
 ---
 
