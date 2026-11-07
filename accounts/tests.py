@@ -294,6 +294,31 @@ class TrustVaultTests(TestCase):
             ).exists()
         )
 
+    def test_upload_rejects_fake_pdf_file(self):
+        self.login_as(self.owner)
+
+        fake_pdf = SimpleUploadedFile(
+            'fake.pdf',
+            b'This is not a real PDF file',
+            content_type='application/pdf'
+        )
+
+        response = self.client.post(
+            reverse('upload'),
+            {
+                'title': 'Fake PDF',
+                'file': fake_pdf,
+            }
+        )
+
+        self.assertRedirects(response, reverse('upload'))
+
+        self.assertFalse(
+            Document.objects.filter(
+                title='Fake PDF'
+            ).exists()
+        )
+
     def test_owner_can_share_document_with_read_permission(self):
         self.login_as(self.owner)
 

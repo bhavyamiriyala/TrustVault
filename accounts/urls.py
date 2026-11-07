@@ -17,3 +17,4 @@ urlpatterns = [
     path('edit/<int:document_id>/', views.edit_document, name='edit_document'),
     path('logout/', views.user_logout, name='logout'),
 ]
+
