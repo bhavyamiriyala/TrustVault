@@ -242,14 +242,12 @@
         </a>
     </header>
 
-
     <main class="container">
 
         <section class="heading">
             <h1>Edit Document</h1>
             <p>Update your document details or replace the existing file.</p>
         </section>
-
 
         <section class="edit-card">
 
@@ -258,7 +256,6 @@
                     <p>{{ message }}</p>
                 {% endfor %}
             </div>
-
 
             <form method="POST" enctype="multipart/form-data">
 
@@ -276,12 +273,10 @@
                     >
                 </div>
 
-
                 <div class="current-file">
                     <p>Currently Uploaded File</p>
                     <strong>{{ document.file.name }}</strong>
                 </div>
-
 
                 <div class="field">
                     <label>Replace Document (Optional)</label>
@@ -293,15 +288,15 @@
                         <input
                             type="file"
                             name="file"
-                            accept=".pdf,.doc,.docx,.txt"
+                            accept=".pdf,.doc,.docx,.txt,.xlsx,.pptx,.csv"
                         >
                     </div>
 
                     <p class="file-info">
-                        Supported formats: PDF, DOC, DOCX, TXT | Maximum size: 5 MB
+                        Supported formats: PDF, DOC, DOCX, TXT, XLSX, PPTX, CSV
+                        | Maximum size: 30 MB
                     </p>
                 </div>
-
 
                 <div class="buttons">
 
@@ -320,7 +315,6 @@
         </section>
 
     </main>
-
 
     <footer class="footer">
         © 2026 TrustVault. Secure Document Management System.

@@ -2,6 +2,8 @@
 import os
 import re
 import zipfile
+import csv
+import io
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
@@ -51,16 +53,77 @@ def is_valid_document_file(uploaded_file, extension):
                     and 'word/document.xml' in names
                 )
 
+        if extension == '.xlsx':
+            uploaded_file.seek(0)
+
+            if not zipfile.is_zipfile(uploaded_file):
+                return False
+
+            uploaded_file.seek(0)
+
+            with zipfile.ZipFile(uploaded_file, 'r') as archive:
+                names = archive.namelist()
+                return (
+                    '[Content_Types].xml' in names
+                    and 'xl/workbook.xml' in names
+                    and any(
+                        name.startswith('xl/worksheets/sheet')
+                        and name.endswith('.xml')
+                        for name in names
+                    )
+                )
+
+        if extension == '.pptx':
+            uploaded_file.seek(0)
+
+            if not zipfile.is_zipfile(uploaded_file):
+                return False
+
+            uploaded_file.seek(0)
+
+            with zipfile.ZipFile(uploaded_file, 'r') as archive:
+                names = archive.namelist()
+                return (
+                    '[Content_Types].xml' in names
+                    and 'ppt/presentation.xml' in names
+                    and any(
+                        name.startswith('ppt/slides/slide')
+                        and name.endswith('.xml')
+                        for name in names
+                    )
+                )
+
         if extension == '.txt':
             content = uploaded_file.read()
             content.decode('utf-8-sig')
             return b'\x00' not in content
+
+        if extension == '.csv':
+            content = uploaded_file.read()
+
+            if b'\x00' in content:
+                return False
+
+            text_content = content.decode('utf-8-sig')
+
+            if not text_content.strip():
+                return False
+
+            # Check that the content can be parsed as CSV.
+            csv_reader = csv.reader(
+                io.StringIO(text_content),
+                strict=True
+            )
+
+            rows = list(csv_reader)
+            return len(rows) > 0
 
         return False
 
     except (
         UnicodeDecodeError,
         zipfile.BadZipFile,
+        csv.Error,
         OSError,
         ValueError
     ):
@@ -68,7 +131,6 @@ def is_valid_document_file(uploaded_file, extension):
 
     finally:
         uploaded_file.seek(0)
-
 
 # --------------------------------------------------
 # USER REGISTRATION - WITHOUT OTP
@@ -228,7 +290,7 @@ def upload_document(request):
         title = request.POST.get('title', '').strip()
         uploaded_file = request.FILES.get('file')
 
-        allowed_extensions = ['.pdf', '.doc', '.docx', '.txt']
+        allowed_extensions = ['.pdf', '.doc', '.docx', '.txt','.xlsx', '.pptx', '.csv']
         max_size = 30 * 1024 * 1024
 
         if not title:
@@ -244,7 +306,7 @@ def upload_document(request):
         if extension not in allowed_extensions:
             messages.error(
                 request,
-                'Only PDF, DOC, DOCX and TXT files are allowed!'
+                'Allowed formats: PDF, DOC, DOCX, TXT, XLSX, PPTX and CSV!'
             )
             return redirect('upload')
 

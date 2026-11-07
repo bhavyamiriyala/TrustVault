@@ -212,11 +212,11 @@
 
     <header class="navbar">
         <div class="logo">Trust<span>Vault.</span></div>
+
         <a href="{% url 'dashboard' %}" class="back-link">
             ← Dashboard
         </a>
     </header>
-
 
     <main class="container">
 
@@ -224,7 +224,6 @@
             <h1>Upload Your Document</h1>
             <p>Securely add your important documents to your TrustVault workspace.</p>
         </section>
-
 
         <section class="upload-card">
 
@@ -235,7 +234,6 @@
                     <p>{{ message }}</p>
                 {% endfor %}
             </div>
-
 
             <!-- UPLOAD FORM -->
 
@@ -255,7 +253,6 @@
                     >
                 </div>
 
-
                 <div class="field">
 
                     <label>Select Document</label>
@@ -271,7 +268,7 @@
                         <input
                             type="file"
                             name="file"
-                            accept=".pdf,.doc,.docx,.txt"
+                            accept=".pdf,.doc,.docx,.txt,.xlsx,.pptx,.csv"
                             required
                         >
 
@@ -279,13 +276,11 @@
 
                 </div>
 
-
                 <div class="file-info">
-                    <p>✓ Supported formats: PDF, DOC, DOCX, TXT</p>
-                    <p>✓ Maximum file size: 5 MB</p>
+                    <p>✓ Supported formats: PDF, DOC, DOCX, TXT, XLSX, PPTX, CSV</p>
+                    <p>✓ Maximum file size: 30 MB</p>
                     <p>✓ Your document will be stored in TrustVault.</p>
                 </div>
-
 
                 <button type="submit" class="upload-btn">
                     Upload Document →
@@ -296,7 +291,6 @@
         </section>
 
     </main>
-
 
     <footer class="footer">
         © 2026 TrustVault. Secure Document Management System.

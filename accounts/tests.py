@@ -1,5 +1,7 @@
 
 import tempfile
+import io
+import zipfile
 
 from django.test import TestCase, override_settings, Client
 from django.urls import reverse
@@ -10,6 +12,16 @@ from .models import Document, DocumentPermission, AuditLog
 
 
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
+
+
+def create_test_zip_file(files):
+    buffer = io.BytesIO()
+
+    with zipfile.ZipFile(buffer, 'w') as archive:
+        for filename, content in files.items():
+            archive.writestr(filename, content)
+
+    return buffer.getvalue()
 
 
 @override_settings(
@@ -170,6 +182,127 @@ class TrustVaultTests(TestCase):
             AuditLog.objects.filter(
                 action='upload',
                 actor=self.owner
+            ).exists()
+        )
+
+    def test_user_can_upload_valid_csv(self):
+        self.login_as(self.owner)
+
+        uploaded_file = SimpleUploadedFile(
+            'data.csv',
+            b'name,age\nBhavya,21\n',
+            content_type='text/csv'
+        )
+
+        response = self.client.post(
+            reverse('upload'),
+            {
+                'title': 'CSV Document',
+                'file': uploaded_file,
+            }
+        )
+
+        self.assertRedirects(response, reverse('document_list'))
+
+        self.assertTrue(
+            Document.objects.filter(
+                owner=self.owner,
+                title='CSV Document'
+            ).exists()
+        )
+
+    def test_user_can_upload_valid_xlsx(self):
+        self.login_as(self.owner)
+
+        content = create_test_zip_file({
+            '[Content_Types].xml': '<Types></Types>',
+            'xl/workbook.xml': '<workbook></workbook>',
+            'xl/worksheets/sheet1.xml': '<worksheet></worksheet>',
+        })
+
+        uploaded_file = SimpleUploadedFile(
+            'data.xlsx',
+            content,
+            content_type=(
+                'application/vnd.openxmlformats-officedocument.'
+                'spreadsheetml.sheet'
+            )
+        )
+
+        response = self.client.post(
+            reverse('upload'),
+            {
+                'title': 'Excel Document',
+                'file': uploaded_file,
+            }
+        )
+
+        self.assertRedirects(response, reverse('document_list'))
+
+        self.assertTrue(
+            Document.objects.filter(
+                owner=self.owner,
+                title='Excel Document'
+            ).exists()
+        )
+
+    def test_user_can_upload_valid_pptx(self):
+        self.login_as(self.owner)
+
+        content = create_test_zip_file({
+            '[Content_Types].xml': '<Types></Types>',
+            'ppt/presentation.xml': '<presentation></presentation>',
+            'ppt/slides/slide1.xml': '<slide></slide>',
+        })
+
+        uploaded_file = SimpleUploadedFile(
+            'presentation.pptx',
+            content,
+            content_type=(
+                'application/vnd.openxmlformats-officedocument.'
+                'presentationml.presentation'
+            )
+        )
+
+        response = self.client.post(
+            reverse('upload'),
+            {
+                'title': 'PowerPoint Document',
+                'file': uploaded_file,
+            }
+        )
+
+        self.assertRedirects(response, reverse('document_list'))
+
+        self.assertTrue(
+            Document.objects.filter(
+                owner=self.owner,
+                title='PowerPoint Document'
+            ).exists()
+        )
+
+    def test_upload_rejects_invalid_xlsx_file(self):
+        self.login_as(self.owner)
+
+        uploaded_file = SimpleUploadedFile(
+            'fake.xlsx',
+            b'This is not a valid Excel file',
+            content_type='application/octet-stream'
+        )
+
+        response = self.client.post(
+            reverse('upload'),
+            {
+                'title': 'Fake Excel',
+                'file': uploaded_file,
+            }
+        )
+
+        self.assertRedirects(response, reverse('upload'))
+
+        self.assertFalse(
+            Document.objects.filter(
+                title='Fake Excel'
             ).exists()
         )
 
