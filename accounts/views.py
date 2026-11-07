@@ -224,7 +224,7 @@ def upload_document(request):
         uploaded_file = request.FILES.get('file')
 
         allowed_extensions = ['.pdf', '.doc', '.docx', '.txt']
-        max_size = 5 * 1024 * 1024
+        max_size = 30 * 1024 * 1024
 
         if not title:
             messages.error(request, 'Document title cannot be empty!')
@@ -246,7 +246,7 @@ def upload_document(request):
         if uploaded_file.size > max_size:
             messages.error(
                 request,
-                'File size must not exceed 5 MB!'
+                'File size must not exceed 30 MB!'
             )
             return redirect('upload')
 
@@ -517,7 +517,7 @@ def edit_document(request, document_id):
         if uploaded_file:
 
             allowed_extensions = ['.pdf', '.doc', '.docx', '.txt']
-            max_size = 5 * 1024 * 1024
+            max_size = 30 * 1024 * 1024
 
             extension = os.path.splitext(uploaded_file.name)[1].lower()
 
@@ -534,7 +534,7 @@ def edit_document(request, document_id):
             if uploaded_file.size > max_size:
                 messages.error(
                     request,
-                    'File size must not exceed 5 MB!'
+                    'File size must not exceed 30 MB!'
                 )
                 return redirect(
                     'edit_document',
