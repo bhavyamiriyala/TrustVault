@@ -1,25 +1,18 @@
 
-import re
 import tempfile
-import time
 
-from django.test import TestCase, override_settings
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
-from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.contrib.auth.hashers import make_password
-from django.test import Client
+
 from .models import Document, DocumentPermission, AuditLog
 
 
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
 
 
-@override_settings(
-    MEDIA_ROOT=TEST_MEDIA_ROOT,
-    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
-)
+@override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
 class TrustVaultTests(TestCase):
 
     def setUp(self):
@@ -54,7 +47,9 @@ class TrustVaultTests(TestCase):
     def login_as(self, user):
         self.client.force_login(user)
 
-    def test_registration_sends_otp_and_creates_account(self):
+    # REGISTRATION TESTS
+
+    def test_registration_creates_account_without_otp(self):
         response = self.client.post(
             reverse('register'),
             {
@@ -65,86 +60,43 @@ class TrustVaultTests(TestCase):
             }
         )
 
-        self.assertRedirects(response, reverse('verify_otp'))
-        self.assertEqual(len(mail.outbox), 1)
-
-        otp_match = re.search(
-            r'OTP is: (\d{6})',
-            mail.outbox[0].body
-        )
-        self.assertIsNotNone(otp_match)
-
-        otp = otp_match.group(1)
-
-        response = self.client.post(
-            reverse('verify_otp'),
-            {'otp': otp}
-        )
-
         self.assertRedirects(response, reverse('login'))
-        self.assertTrue(
-            User.objects.filter(username='newuser').exists()
-        )
 
-    def test_registration_rejects_incorrect_otp(self):
-        session = self.client.session
+        user = User.objects.get(username='newuser')
+        self.assertEqual(user.email, 'newuser@example.com')
+        self.assertTrue(user.check_password('StrongPass@123'))
 
-        session['pending_registration'] = {
-            'username': 'wrongotpuser',
-            'email': 'wrongotp@example.com',
-            'password_hash': make_password('StrongPass@123'),
-            'otp_hash': make_password('123456'),
-            'expires_at': time.time() + 300,
-            'attempts': 0,
-        }
-
-        session.save()
-
+    def test_registration_rejects_duplicate_username(self):
         response = self.client.post(
-            reverse('verify_otp'),
-            {'otp': '654321'}
-        )
-
-        self.assertRedirects(response, reverse('verify_otp'))
-
-        self.assertFalse(
-            User.objects.filter(username='wrongotpuser').exists()
-        )
-
-        self.assertEqual(
-            self.client.session['pending_registration']['attempts'],
-            1
-        )
-
-    def test_registration_rejects_expired_otp(self):
-        session = self.client.session
-
-        session['pending_registration'] = {
-            'username': 'expiredotpuser',
-            'email': 'expiredotp@example.com',
-            'password_hash': make_password('StrongPass@123'),
-            'otp_hash': make_password('123456'),
-            'expires_at': time.time() - 10,
-            'attempts': 0,
-        }
-
-        session.save()
-
-        response = self.client.post(
-            reverse('verify_otp'),
-            {'otp': '123456'}
+            reverse('register'),
+            {
+                'username': 'owner',
+                'email': 'newowner@example.com',
+                'password': 'StrongPass@123',
+                'confirm_password': 'StrongPass@123',
+            }
         )
 
         self.assertRedirects(response, reverse('register'))
+        self.assertEqual(User.objects.filter(username='owner').count(), 1)
 
-        self.assertNotIn(
-            'pending_registration',
-            self.client.session
+    def test_registration_rejects_password_mismatch(self):
+        response = self.client.post(
+            reverse('register'),
+            {
+                'username': 'mismatchuser',
+                'email': 'mismatch@example.com',
+                'password': 'StrongPass@123',
+                'confirm_password': 'DifferentPass@123',
+            }
         )
 
+        self.assertRedirects(response, reverse('register'))
         self.assertFalse(
-            User.objects.filter(username='expiredotpuser').exists()
+            User.objects.filter(username='mismatchuser').exists()
         )
+
+    # LOGIN TESTS
 
     def test_user_can_login(self):
         response = self.client.post(
@@ -181,6 +133,8 @@ class TrustVaultTests(TestCase):
             f"{reverse('login')}?next={reverse('dashboard')}"
         )
 
+    # DOCUMENT LIST TESTS
+
     def test_document_owner_can_view_document_list(self):
         self.login_as(self.owner)
 
@@ -210,6 +164,8 @@ class TrustVaultTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Test Document')
         self.assertNotContains(response, 'Another File')
+
+    # DOCUMENT UPLOAD TESTS
 
     def test_user_can_upload_valid_document(self):
         self.login_as(self.owner)
@@ -264,9 +220,7 @@ class TrustVaultTests(TestCase):
         self.assertRedirects(response, reverse('upload'))
 
         self.assertFalse(
-            Document.objects.filter(
-                title='Large Document'
-            ).exists()
+            Document.objects.filter(title='Large Document').exists()
         )
 
     def test_upload_rejects_invalid_extension(self):
@@ -289,9 +243,7 @@ class TrustVaultTests(TestCase):
         self.assertRedirects(response, reverse('upload'))
 
         self.assertFalse(
-            Document.objects.filter(
-                title='Invalid Document'
-            ).exists()
+            Document.objects.filter(title='Invalid Document').exists()
         )
 
     def test_upload_rejects_fake_pdf_file(self):
@@ -314,19 +266,16 @@ class TrustVaultTests(TestCase):
         self.assertRedirects(response, reverse('upload'))
 
         self.assertFalse(
-            Document.objects.filter(
-                title='Fake PDF'
-            ).exists()
+            Document.objects.filter(title='Fake PDF').exists()
         )
+
+    # DOCUMENT SHARING TESTS
 
     def test_owner_can_share_document_with_read_permission(self):
         self.login_as(self.owner)
 
         response = self.client.post(
-            reverse(
-                'share_document',
-                args=[self.document.id]
-            ),
+            reverse('share_document', args=[self.document.id]),
             {
                 'username': 'reader',
                 'permission': 'read',
@@ -354,10 +303,7 @@ class TrustVaultTests(TestCase):
         self.login_as(self.reader)
 
         response = self.client.get(
-            reverse(
-                'access_document',
-                args=[self.document.id]
-            )
+            reverse('access_document', args=[self.document.id])
         )
 
         self.assertEqual(response.status_code, 200)
@@ -370,13 +316,12 @@ class TrustVaultTests(TestCase):
         self.login_as(self.editor)
 
         response = self.client.get(
-            reverse(
-                'access_document',
-                args=[self.document.id]
-            )
+            reverse('access_document', args=[self.document.id])
         )
 
         self.assertEqual(response.status_code, 404)
+
+    # DOCUMENT EDIT PERMISSION TESTS
 
     def test_read_permission_user_cannot_edit_document(self):
         DocumentPermission.objects.create(
@@ -389,10 +334,7 @@ class TrustVaultTests(TestCase):
         self.login_as(self.reader)
 
         response = self.client.get(
-            reverse(
-                'edit_document',
-                args=[self.document.id]
-            )
+            reverse('edit_document', args=[self.document.id])
         )
 
         self.assertEqual(response.status_code, 404)
@@ -408,10 +350,7 @@ class TrustVaultTests(TestCase):
         self.login_as(self.editor)
 
         response = self.client.post(
-            reverse(
-                'edit_document',
-                args=[self.document.id]
-            ),
+            reverse('edit_document', args=[self.document.id]),
             {'title': 'Updated Document'}
         )
 
@@ -419,6 +358,8 @@ class TrustVaultTests(TestCase):
 
         self.document.refresh_from_db()
         self.assertEqual(self.document.title, 'Updated Document')
+
+    # REVOKE ACCESS TESTS
 
     def test_owner_can_revoke_document_access(self):
         DocumentPermission.objects.create(
@@ -465,6 +406,8 @@ class TrustVaultTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    # AUDIT TRAIL TESTS
+
     def test_audit_trail_is_available_to_owner(self):
         AuditLog.objects.create(
             document=self.document,
@@ -495,7 +438,8 @@ class TrustVaultTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'Private owner activity')
 
-   
+    # CSRF TEST
+
     def test_revoke_access_rejects_post_without_csrf_token(self):
         csrf_client = Client(enforce_csrf_checks=True)
         csrf_client.force_login(self.owner)
