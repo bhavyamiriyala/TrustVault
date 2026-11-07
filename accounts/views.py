@@ -1,8 +1,6 @@
 
 import os
 import re
-import secrets
-import time
 import zipfile
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -12,10 +10,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
-from django.core.mail import send_mail
-from django.contrib.auth.hashers import make_password, check_password
-from django.conf import settings
 from django.db.models import Q
+
 from .models import Document, DocumentPermission, AuditLog
 
 
@@ -24,10 +20,7 @@ from .models import Document, DocumentPermission, AuditLog
 # --------------------------------------------------
 
 def is_valid_document_file(uploaded_file, extension):
-    """
-    Perform basic file-format checks based on file contents.
-    This is not a malware scan.
-    """
+    """Perform basic file-format checks. This is not a malware scan."""
     try:
         uploaded_file.seek(0)
 
@@ -35,9 +28,7 @@ def is_valid_document_file(uploaded_file, extension):
             return uploaded_file.read(5) == b'%PDF-'
 
         if extension == '.doc':
-            doc_signature = bytes.fromhex(
-                'D0 CF 11 E0 A1 B1 1A E1'
-            )
+            doc_signature = bytes.fromhex('D0 CF 11 E0 A1 B1 1A E1')
             return uploaded_file.read(8) == doc_signature
 
         if extension == '.docx':
@@ -50,7 +41,6 @@ def is_valid_document_file(uploaded_file, extension):
 
             with zipfile.ZipFile(uploaded_file, 'r') as archive:
                 names = archive.namelist()
-
                 return (
                     '[Content_Types].xml' in names
                     and 'word/document.xml' in names
@@ -76,7 +66,7 @@ def is_valid_document_file(uploaded_file, extension):
 
 
 # --------------------------------------------------
-# USER REGISTRATION
+# USER REGISTRATION - WITHOUT OTP
 # --------------------------------------------------
 
 def register(request):
@@ -86,15 +76,10 @@ def register(request):
         username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
-        confirm_password = request.POST.get(
-            'confirm_password', ''
-        )
+        confirm_password = request.POST.get('confirm_password', '')
 
         if not username or not email or not password:
-            messages.error(
-                request,
-                'Please fill in all fields!'
-            )
+            messages.error(request, 'Please fill in all fields!')
             return redirect('register')
 
         if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', email):
@@ -102,10 +87,7 @@ def register(request):
             return redirect('register')
 
         if password != confirm_password:
-            messages.error(
-                request,
-                'Passwords do not match!'
-            )
+            messages.error(request, 'Passwords do not match!')
             return redirect('register')
 
         if len(password) < 8:
@@ -136,196 +118,36 @@ def register(request):
             )
             return redirect('register')
 
-        if User.objects.filter(
-            username__iexact=username
-        ).exists():
+        if not re.search(r'[^A-Za-z0-9\s]', password):
             messages.error(
                 request,
-                'Username already exists!'
+                'Password needs a special character!'
             )
             return redirect('register')
 
-        if User.objects.filter(
-            email__iexact=email
-        ).exists():
-            messages.error(
-                request,
-                'Email already registered!'
-            )
+        if User.objects.filter(username__iexact=username).exists():
+            messages.error(request, 'Username already exists!')
             return redirect('register')
 
-        # Generate a 6-digit OTP
-        otp = str(secrets.randbelow(900000) + 100000)
-
-        # Store registration details temporarily in session
-        request.session['pending_registration'] = {
-            'username': username,
-            'email': email,
-            'password_hash': make_password(password),
-            'otp_hash': make_password(otp),
-            'expires_at': time.time() + 300,
-            'attempts': 0,
-        }
-
-        try:
-            send_mail(
-                subject='TrustVault - Email Verification OTP',
-                message=(
-                    f'Hello {username},\n\n'
-                    f'Your TrustVault verification OTP is: {otp}\n\n'
-                    'This OTP expires in 5 minutes.\n'
-                    'Do not share this OTP with anyone.'
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            )
-
-        except Exception:
-            request.session.pop(
-                'pending_registration', None
-            )
-
-            messages.error(
-                request,
-                'Unable to send OTP. Please check your email configuration.'
-            )
+        if User.objects.filter(email__iexact=email).exists():
+            messages.error(request, 'Email already registered!')
             return redirect('register')
 
-        messages.success(
-            request,
-            'OTP sent to your email address!'
-        )
-
-        return redirect('verify_otp')
-
-    return render(request, 'accounts/register.html')
-
-
-# --------------------------------------------------
-# EMAIL OTP VERIFICATION
-# --------------------------------------------------
-
-def verify_otp(request):
-
-    pending = request.session.get('pending_registration')
-
-    if not pending:
-        messages.error(request, 'Please register first.')
-        return redirect('register')
-
-    if request.method == 'POST':
-
-        entered_otp = request.POST.get('otp', '').strip()
-
-        # Check OTP expiry
-        if time.time() > pending['expires_at']:
-
-            request.session.pop(
-                'pending_registration', None
-            )
-
-            messages.error(
-                request,
-                'OTP expired. Please register again.'
-            )
-            return redirect('register')
-
-        # Check maximum incorrect attempts
-        if pending['attempts'] >= 5:
-
-            request.session.pop(
-                'pending_registration', None
-            )
-
-            messages.error(
-                request,
-                'Too many incorrect attempts. Please register again.'
-            )
-            return redirect('register')
-
-        # Verify OTP
-        if not check_password(
-            entered_otp,
-            pending['otp_hash']
-        ):
-
-            pending['attempts'] += 1
-
-            if pending['attempts'] >= 5:
-
-                request.session.pop(
-                    'pending_registration', None
-                )
-
-                messages.error(
-                    request,
-                    'Too many incorrect attempts. Please register again.'
-                )
-                return redirect('register')
-
-            request.session['pending_registration'] = pending
-
-            messages.error(
-                request,
-                'Incorrect OTP. Please try again.'
-            )
-            return redirect('verify_otp')
-
-        # Check duplicate username
-        if User.objects.filter(
-            username__iexact=pending['username']
-        ).exists():
-
-            request.session.pop(
-                'pending_registration', None
-            )
-
-            messages.error(
-                request,
-                'Username already exists. Please register again.'
-            )
-            return redirect('register')
-
-        # Check duplicate email
-        if User.objects.filter(
-            email__iexact=pending['email']
-        ).exists():
-
-            request.session.pop(
-                'pending_registration', None
-            )
-
-            messages.error(
-                request,
-                'Email already registered. Please login.'
-            )
-            return redirect('login')
-
-        # Create account after successful OTP verification
-        user = User(
-            username=pending['username'],
-            email=pending['email'],
-        )
-
-        user.password = pending['password_hash']
-        user.save()
-
-        request.session.pop(
-            'pending_registration', None
+        # Create the account immediately without email OTP.
+        User.objects.create_user(
+            username=username,
+            email=email,
+            password=password
         )
 
         messages.success(
             request,
-            'Email verified! Your account has been created. Please login.'
+            'Account created successfully! Please login.'
         )
 
         return redirect('login')
 
-    return render(
-        request,
-        'accounts/verify_otp.html'
-    )
+    return render(request, 'accounts/register.html')
 
 
 # --------------------------------------------------
@@ -353,21 +175,12 @@ def user_login(request):
         )
 
         if user is not None:
-
             login(request, user)
 
-            messages.success(
-                request,
-                'Login successful!'
-            )
-
+            messages.success(request, 'Login successful!')
             return redirect('dashboard')
 
-        messages.error(
-            request,
-            'Invalid username or password!'
-        )
-
+        messages.error(request, 'Invalid username or password!')
         return redirect('login')
 
     return render(request, 'accounts/login.html')
@@ -380,9 +193,7 @@ def user_login(request):
 @login_required
 def dashboard(request):
 
-    documents = Document.objects.filter(
-        owner=request.user
-    )
+    documents = Document.objects.filter(owner=request.user)
 
     shared_permissions = DocumentPermission.objects.filter(
         shared_with=request.user
@@ -412,68 +223,46 @@ def upload_document(request):
         title = request.POST.get('title', '').strip()
         uploaded_file = request.FILES.get('file')
 
-        allowed_extensions = [
-            '.pdf', '.doc', '.docx', '.txt'
-        ]
-
+        allowed_extensions = ['.pdf', '.doc', '.docx', '.txt']
         max_size = 5 * 1024 * 1024
 
         if not title:
-            messages.error(
-                request,
-                'Document title cannot be empty!'
-            )
+            messages.error(request, 'Document title cannot be empty!')
             return redirect('upload')
 
         if not uploaded_file:
-            messages.error(
-                request,
-                'Please select a document to upload!'
-            )
+            messages.error(request, 'Please select a document to upload!')
             return redirect('upload')
 
-        extension = os.path.splitext(
-            uploaded_file.name
-        )[1].lower()
+        extension = os.path.splitext(uploaded_file.name)[1].lower()
 
-        # Validate extension
         if extension not in allowed_extensions:
-
             messages.error(
                 request,
                 'Only PDF, DOC, DOCX and TXT files are allowed!'
             )
             return redirect('upload')
 
-        # Validate file size
         if uploaded_file.size > max_size:
-
             messages.error(
                 request,
                 'File size must not exceed 5 MB!'
             )
             return redirect('upload')
 
-        # Validate actual file content
-        if not is_valid_document_file(
-            uploaded_file,
-            extension
-        ):
-
+        if not is_valid_document_file(uploaded_file, extension):
             messages.error(
                 request,
                 'Invalid file content. Please upload a valid document!'
             )
             return redirect('upload')
 
-        # Save document
         document = Document.objects.create(
             owner=request.user,
             title=title,
             file=uploaded_file
         )
 
-        # Create audit log
         AuditLog.objects.create(
             document=document,
             actor=request.user,
@@ -481,46 +270,31 @@ def upload_document(request):
             details='Document uploaded'
         )
 
-        messages.success(
-            request,
-            'Document uploaded successfully!'
-        )
-
+        messages.success(request, 'Document uploaded successfully!')
         return redirect('document_list')
 
-    return render(
-        request,
-        'accounts/upload.html'
-    )
+    return render(request, 'accounts/upload.html')
 
 
 # --------------------------------------------------
 # DOCUMENT LIST
 # --------------------------------------------------
 
-
-
 @login_required
 def document_list(request):
 
     search_query = request.GET.get('q', '').strip()
 
-    # Documents owned by the logged-in user
     documents = Document.objects.filter(
         owner=request.user
     ).order_by('-uploaded_at')
 
-    # Documents shared with the logged-in user
     shared_documents = Document.objects.filter(
         permissions__shared_with=request.user
     ).distinct().order_by('-uploaded_at')
 
-    # Search both owned and shared documents
     if search_query:
-        documents = documents.filter(
-            title__icontains=search_query
-        )
-
+        documents = documents.filter(title__icontains=search_query)
         shared_documents = shared_documents.filter(
             title__icontains=search_query
         )
@@ -537,13 +311,13 @@ def document_list(request):
     )
 
 
-
 # --------------------------------------------------
 # SHARE DOCUMENT
 # --------------------------------------------------
 
 @login_required
 def share_document(request, document_id):
+
     document = get_object_or_404(
         Document,
         id=document_id,
@@ -551,6 +325,7 @@ def share_document(request, document_id):
     )
 
     if request.method == 'POST':
+
         username = request.POST.get('username', '').strip()
         permission_type = request.POST.get('permission')
 
@@ -565,7 +340,10 @@ def share_document(request, document_id):
             return redirect('share_document', document_id=document.id)
 
         if shared_user == request.user:
-            messages.error(request, 'You cannot share a document with yourself.')
+            messages.error(
+                request,
+                'You cannot share a document with yourself.'
+            )
             return redirect('share_document', document_id=document.id)
 
         DocumentPermission.objects.update_or_create(
@@ -577,15 +355,16 @@ def share_document(request, document_id):
             }
         )
 
-        # User A's audit trail entry
         AuditLog.objects.create(
             document=document,
             actor=request.user,
             action='share',
-            details=f"Shared with {shared_user.username} ({permission_type} permission)"
+            details=(
+                f"Shared with {shared_user.username} "
+                f"({permission_type} permission)"
+            )
         )
 
-        # User B's audit trail entry
         AuditLog.objects.create(
             document=None,
             actor=shared_user,
@@ -605,6 +384,7 @@ def share_document(request, document_id):
         {'document': document}
     )
 
+
 # --------------------------------------------------
 # ACCESS / DOWNLOAD DOCUMENT
 # --------------------------------------------------
@@ -612,10 +392,7 @@ def share_document(request, document_id):
 @login_required
 def access_document(request, document_id):
 
-    document = get_object_or_404(
-        Document,
-        id=document_id
-    )
+    document = get_object_or_404(Document, id=document_id)
 
     is_owner = document.owner == request.user
 
@@ -624,11 +401,9 @@ def access_document(request, document_id):
         shared_with=request.user
     ).first()
 
-    # Only owner or authorized users can access
     if not is_owner and permission is None:
         raise Http404
 
-    # Record document access
     AuditLog.objects.create(
         document=document,
         actor=request.user,
@@ -653,12 +428,10 @@ def access_document(request, document_id):
 # REVOKE DOCUMENT ACCESS
 # --------------------------------------------------
 
-
 @login_required
 @require_POST
 def revoke_access(request, document_id, user_id):
 
-    # Only the document owner can revoke access
     permission = get_object_or_404(
         DocumentPermission,
         document_id=document_id,
@@ -671,7 +444,6 @@ def revoke_access(request, document_id, user_id):
 
     permission.delete()
 
-    # Record the revocation
     AuditLog.objects.create(
         document=document,
         actor=request.user,
@@ -691,7 +463,6 @@ def revoke_access(request, document_id, user_id):
 # AUDIT TRAIL
 # --------------------------------------------------
 
-
 @login_required
 def audit_trail(request):
 
@@ -706,11 +477,8 @@ def audit_trail(request):
     return render(
         request,
         'accounts/audit_trail.html',
-        {
-            'logs': logs
-        }
+        {'logs': logs}
     )
-
 
 
 # --------------------------------------------------
@@ -720,10 +488,7 @@ def audit_trail(request):
 @login_required
 def edit_document(request, document_id):
 
-    document = get_object_or_404(
-        Document,
-        id=document_id
-    )
+    document = get_object_or_404(Document, id=document_id)
 
     is_owner = document.owner == request.user
 
@@ -732,28 +497,18 @@ def edit_document(request, document_id):
         shared_with=request.user
     ).first()
 
-    # Check edit permission
     if not is_owner and (
-        permission is None
-        or permission.permission != 'edit'
+        permission is None or permission.permission != 'edit'
     ):
         raise Http404
 
     if request.method == 'POST':
 
-        title = request.POST.get(
-            'title', ''
-        ).strip()
-
+        title = request.POST.get('title', '').strip()
         uploaded_file = request.FILES.get('file')
 
         if not title:
-
-            messages.error(
-                request,
-                'Document title cannot be empty!'
-            )
-
+            messages.error(request, 'Document title cannot be empty!')
             return redirect(
                 'edit_document',
                 document_id=document.id
@@ -761,50 +516,36 @@ def edit_document(request, document_id):
 
         if uploaded_file:
 
-            allowed_extensions = [
-                '.pdf', '.doc', '.docx', '.txt'
-            ]
-
+            allowed_extensions = ['.pdf', '.doc', '.docx', '.txt']
             max_size = 5 * 1024 * 1024
 
-            extension = os.path.splitext(
-                uploaded_file.name
-            )[1].lower()
+            extension = os.path.splitext(uploaded_file.name)[1].lower()
 
             if extension not in allowed_extensions:
-
                 messages.error(
                     request,
                     'Only PDF, DOC, DOCX and TXT files are allowed!'
                 )
-
                 return redirect(
                     'edit_document',
                     document_id=document.id
                 )
 
             if uploaded_file.size > max_size:
-
                 messages.error(
                     request,
                     'File size must not exceed 5 MB!'
                 )
-
                 return redirect(
                     'edit_document',
                     document_id=document.id
                 )
 
-            if not is_valid_document_file(
-                uploaded_file,
-                extension
-            ):
-
+            if not is_valid_document_file(uploaded_file, extension):
                 messages.error(
                     request,
                     'Invalid file content. Please upload a valid document!'
                 )
-
                 return redirect(
                     'edit_document',
                     document_id=document.id
@@ -822,19 +563,13 @@ def edit_document(request, document_id):
             details='Document updated'
         )
 
-        messages.success(
-            request,
-            'Document updated successfully!'
-        )
-
+        messages.success(request, 'Document updated successfully!')
         return redirect('document_list')
 
     return render(
         request,
         'accounts/edit_document.html',
-        {
-            'document': document
-        }
+        {'document': document}
     )
 
 
@@ -847,5 +582,4 @@ def edit_document(request, document_id):
 def user_logout(request):
 
     logout(request)
-
     return redirect('login')
