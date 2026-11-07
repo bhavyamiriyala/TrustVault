@@ -128,8 +128,6 @@
             box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.08);
         }
 
-        /* SHOW / HIDE PASSWORD */
-
         .password-wrapper {
             position: relative;
         }
@@ -153,6 +151,26 @@
 
         .toggle-password:hover {
             color: #087f75;
+        }
+
+        /* FORGOT PASSWORD LINK */
+
+        .forgot-password {
+            text-align: right;
+            margin-top: -10px;
+            margin-bottom: 18px;
+        }
+
+        .forgot-password a {
+            color: #0d9488;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .forgot-password a:hover {
+            color: #087f75;
+            text-decoration: underline;
         }
 
         .login-btn {
@@ -190,6 +208,35 @@
             text-decoration: underline;
         }
 
+        /* ADMIN LOGIN LINK */
+
+        .admin-login {
+            text-align: center;
+            margin-top: 22px;
+            padding-top: 20px;
+            border-top: 1px solid #e5eeee;
+            font-size: 13px;
+            color: #829394;
+        }
+
+        .admin-login a {
+            display: inline-block;
+            margin-top: 9px;
+            color: #173f40;
+            font-weight: 700;
+            text-decoration: none;
+            border: 1px solid #dce8e7;
+            padding: 10px 22px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+
+        .admin-login a:hover {
+            background: #e5f7f3;
+            border-color: #0d9488;
+            color: #087f75;
+        }
+
         .footer {
             text-align: center;
             color: #9aabab;
@@ -215,7 +262,6 @@
         <div class="logo">Trust<span>Vault.</span></div>
     </header>
 
-
     <main class="main">
 
         <section class="login-card">
@@ -227,13 +273,11 @@
                 <p>Sign in to access your secure document workspace.</p>
             </div>
 
-
             <div class="messages">
                 {% for message in messages %}
                     <p>{{ message }}</p>
                 {% endfor %}
             </div>
-
 
             <form method="POST">
 
@@ -250,7 +294,6 @@
                         required
                     >
                 </div>
-
 
                 <div class="field">
                     <label for="password">Password</label>
@@ -276,6 +319,13 @@
                     </div>
                 </div>
 
+                <!-- FORGOT PASSWORD -->
+
+                <div class="forgot-password">
+                    <a href="{% url 'forgot_password' %}">
+                        Forgot Password?
+                    </a>
+                </div>
 
                 <button type="submit" class="login-btn">
                     Sign In →
@@ -283,21 +333,26 @@
 
             </form>
 
-
             <div class="register-link">
                 Don't have an account?
                 <a href="{% url 'register' %}">Create Account</a>
+            </div>
+
+            <div class="admin-login">
+                <p>Are you an administrator?</p>
+
+                <a href="{% url 'admin:login' %}">
+                    🛡 Admin Login
+                </a>
             </div>
 
         </section>
 
     </main>
 
-
     <footer class="footer">
         © 2026 TrustVault. Secure Document Management System.
     </footer>
-
 
     <script>
         function togglePassword() {

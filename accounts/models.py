@@ -1,3 +1,4 @@
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -10,6 +11,7 @@ class Document(models.Model):
 
     def __str__(self):
         return self.title
+
 
 class DocumentPermission(models.Model):
 
@@ -48,6 +50,7 @@ class DocumentPermission(models.Model):
 
     def __str__(self):
         return f"{self.document.title} - {self.shared_with.username} - {self.permission}"
+
 
 class AuditLog(models.Model):
 
@@ -90,13 +93,48 @@ class AuditLog(models.Model):
     def __str__(self):
         return f"{self.action} - {self.actor} - {self.timestamp}"
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
+class PasswordResetRequest(models.Model):
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('resolved', 'Resolved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='password_reset_requests'
+    )
+
+    username = models.CharField(max_length=150)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    resolved_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    resolved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resolved_password_requests'
+    )
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.username} - {self.status}"

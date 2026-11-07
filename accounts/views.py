@@ -12,7 +12,12 @@ from django.http import FileResponse, Http404
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 
-from .models import Document, DocumentPermission, AuditLog
+from .models import (
+    Document,
+    DocumentPermission,
+    AuditLog,
+    PasswordResetRequest
+)
 
 
 # --------------------------------------------------
@@ -583,3 +588,48 @@ def user_logout(request):
 
     logout(request)
     return redirect('login')
+
+# --------------------------------------------------
+# FORGOT PASSWORD - ADMIN ASSISTED RESET
+# --------------------------------------------------
+
+def forgot_password(request):
+
+    if request.method == 'POST':
+
+        username = request.POST.get('username', '').strip()
+
+        if not username:
+            messages.error(request, 'Please enter your username!')
+            return redirect('forgot_password')
+
+        # Find the account without revealing whether it exists.
+        user = User.objects.filter(
+            username__iexact=username
+        ).first()
+
+        # Avoid creating multiple pending requests.
+        pending_request = PasswordResetRequest.objects.filter(
+            username__iexact=username,
+            status='pending'
+        ).first()
+
+        if not pending_request:
+            PasswordResetRequest.objects.create(
+                user=user,
+                username=username
+            )
+
+        messages.success(
+            request,
+            'If the account exists, your password reset request '
+            'has been submitted. Please contact the administrator '
+            'for further assistance.'
+        )
+
+        return redirect('forgot_password')
+
+    return render(
+        request,
+        'accounts/forgot_password.html'
+    )
